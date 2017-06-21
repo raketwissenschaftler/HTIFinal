@@ -1,0 +1,15 @@
+<ion-view title="Week program" hide-nav-bar="true">
+  <ion-content class="padding">
+    <h2 align="center">Week program</h2>
+    <div ng-repeat="day in weekDays">
+      <h3 align="center">{{ day }}</h3>
+      <multi-slider
+        floor="0"
+        step="1"
+        precision="1"
+        ceiling="2400"
+        ng-model="sliders">
+      </multi-slider>
+    </div>
+  </ion-content>
+</ion-view>

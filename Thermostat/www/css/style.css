@@ -1,0 +1,51 @@
+#slider{
+  width: auto !important;
+  height: auto !important;
+}
+.fucking-huge-text{
+  font-size: 75px;
+}
+.rs-container{
+  margin-left: auto;
+  margin-right: auto;
+}
+.rs-tooltip-text{
+  font-size: 30px !important;
+  line-height: 35px !important;
+}
+
+.program-indicator-div{
+  height: 50px;
+  margin-top: 5%;
+  margin-right: auto;
+  margin-left: auto;
+}
+.program-bar{
+  display: inline-block;
+  height:100%;
+  box-sizing: border-box;
+  float: left;
+  font-weight: bold;
+  font-family: arial, sans-serif;
+}
+.night-program{
+  background-color: #395584;
+}
+.day-program{
+  background-color: #f7f30c;
+}
+.align-center{
+  text-align: center;
+}
+.large-button {
+  height: 75px;
+  margin-top: 10%;
+}
+#override-slider{
+  margin-top: 5%;
+  width: auto !important;
+  height: auto !important;
+}
+.buttons-div{
+  margin-top: 5%;
+}
