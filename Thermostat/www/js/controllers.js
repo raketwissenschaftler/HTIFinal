@@ -86,6 +86,10 @@ angular.module('starter.controllers', [])
   .controller('ProgramDetailCtrl', function ($scope, $http, $stateParams, rootUrl) {
     $scope.weekDay = $stateParams.weekDay;
 
+    $scope.editSwitch = function (index) {
+
+    };
+
     $http.get(rootUrl).then(function (response) {
       $scope.nightSwitches = [];
       var program = response.data.thermostat.week_program.days[$scope.weekDay];
