@@ -1,4 +1,8 @@
 {
   "name": "Thermostat",
-  "app_id": "2daa15a9"
+  "app_id": "2daa15a9",
+  "type": "ionic1",
+  "watchPatterns": [
+    "scss/**/*"
+  ]
 }
