@@ -80,11 +80,25 @@ angular.module('starter.controllers', [])
     })
   })
 
-  .controller('ProgramCtrl', function($scope) {
+  .controller('ProgramCtrl', function($scope, $http, rootUrl) {
     $scope.weekDays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
-    $scope.sliders = [
-      {title:'User 1: ', value:100 },
-      {title:'User 2: ', value:200 },
-      {title:'User 3: ', value:450 }
-    ];
+  })
+  .controller('ProgramDetailCtrl', function ($scope, $http, $stateParams, rootUrl) {
+    $scope.weekDay = $stateParams.weekDay;
+
+    $http.get(rootUrl).then(function (response) {
+      $scope.nightSwitches = [];
+      var program = response.data.thermostat.week_program.days[$scope.weekDay];
+      for(var i = 0; i < program.switches.length; i++){
+        if(program.switches[i].type == "night"){
+          program.switches[i].end = program.switches[i].time;
+          if(i == 0){
+            program.switches[i].start = "00:00";
+          }else{
+            program.switches[i].start = program.switches[i - 1].time;
+          }
+          $scope.nightSwitches.push(program.switches[i]);
+        }
+      }
+    });
   });
