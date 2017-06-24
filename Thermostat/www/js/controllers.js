@@ -1,10 +1,79 @@
 angular.module('starter.controllers', [])
 
   .controller('DashCtrl', function($scope, $http, $ionicModal, rootUrl) {
+    function generateLabels () {
+      var labels = [];
+      var start = moment().hour(0).minute(0).second(0);
+
+      labels.push(start.format("HH:mm"));
+      for(var i = 0; i < 22; i++){
+        start.add(1, "hour");
+        labels.push(start.format("HH:mm"));
+      }
+      return labels;
+    }
+
+    function generateData(program, labels, dayTemperature, nightTemperature) {
+      var data = [];
+      var switchCounter = 0;
+      var nightSwitches = [];
+      for(var i = 0; i < program.length; i++){
+        if(program[i].type == "night"){
+          nightSwitches.push(program[i]);
+        }
+      }
+      var currentSwitch = nightSwitches[switchCounter];
+      for(var i = 0; i < labels.length; i++){
+        var labelTime = moment(labels[i], "HH:mm");
+        if(moment(currentSwitch.time, "HH:mm") >= labelTime){
+          if(currentSwitch.state == "on"){
+            data.push(dayTemperature);
+          }else {
+            data.push(nightTemperature);
+          }
+        }else{
+          while(!(moment(currentSwitch.time, "HH:mm") >= labelTime)){
+            switchCounter++;
+            currentSwitch = nightSwitches[switchCounter];
+          }
+          if(currentSwitch.state == "on"){
+            data.push(dayTemperature);
+          }else {
+            data.push(nightTemperature);
+          }
+        }
+      }
+
+      return data;
+    }
+    $scope.choice = 1;
+    $scope.graphOptions = {
+        elements: {
+          point: {
+            radius: 0,
+            hitRadius: 0,
+            hoverRadius: 0
+          }
+        }
+    };
     $http.get(rootUrl).then(function (response) {
       $scope.currentTemp = response.data.thermostat.current_temperature;
       $scope.currentProgram = response.data.thermostat.week_program.days[response.data.thermostat.current_day];
       $scope.programBars = getBarWidthPrecentages($scope.currentProgram);
+      var labels = generateLabels();
+      $scope.data = generateData(
+        $scope.currentProgram.switches, labels,
+        response.data.thermostat.day_temperature,
+        response.data.thermostat.night_temperature
+      );
+      $scope.labels = [];
+      for(var i = 0; i < labels.length; i++){
+        if(i % 2 == 0){
+          $scope.labels.push(labels[i]);
+        }else{
+          $scope.labels.push("");
+        }
+      }
     });
 
     function renderToolTip(args) {
@@ -61,7 +130,7 @@ angular.module('starter.controllers', [])
         radius: 100,
         width: 10,
         handleSize: "+10",
-        sliderType: "default",
+        sliderType: "min-range",
         value: "20.0",
         min: 5,
         max: 30,
@@ -77,7 +146,9 @@ angular.module('starter.controllers', [])
       animation: 'slide-in-up'
     }).then(function (modal) {
       $scope.modal = modal;
-    })
+    });
+
+
   })
 
   .controller('ProgramCtrl', function($scope, $http, rootUrl) {

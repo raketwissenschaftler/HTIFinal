@@ -7,12 +7,10 @@
       </div>
     </div>
     <div class="program-indicator-div">
-      <span class="program-bar" ng-repeat="programBar in programBars"
-            ng-style="{width: programBar.width}"
-            ng-class="{'night-program': programBar.state == 'off', 'day-program': programBar.state == 'on'}">
-      </span>
+      <canvas height="100%" id="line" class="chart chart-line" chart-data="data"
+              chart-labels="labels" chart-options="graphOptions">
+      </canvas>
     </div>
-    <p class="align-center">Current program:</p>
     <button class="button button-block button-positive large-button" ng-click="overrideTemp()">
       Override program
     </button>

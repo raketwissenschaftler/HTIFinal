@@ -10,13 +10,14 @@
     </div>
 
     <div class="buttons-div">
+      <ion-list>
+        <ion-radio ng-model="choice" ng-value="1">Override until next switch</ion-radio>
+        <ion-radio ng-model="choice" ng-value="2">Override permanently</ion-radio>
+      </ion-list>
       <button class="button button-block button-positive large-button">
-        Override until next switch
+        Override
       </button>
-      <button class="button button-block button-positive large-button">
-        Override permanently
-      </button>
-      <button class="button button-block button-assertive large-button" ng-click="modal.hide()">
+      <button class="button button-block button-assertive" ng-click="modal.hide()" style="margin-top: 5%">
         Abort override
       </button>
     </div>

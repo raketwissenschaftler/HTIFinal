@@ -15,10 +15,8 @@
 }
 
 .program-indicator-div{
-  height: 50px;
-  margin-top: 5%;
-  margin-right: auto;
-  margin-left: auto;
+  height: 100px;
+  margin: 5% auto;
 }
 .program-bar{
   display: inline-block;
