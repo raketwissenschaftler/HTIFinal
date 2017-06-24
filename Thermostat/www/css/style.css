@@ -2,6 +2,7 @@
   width: auto !important;
   height: auto !important;
 }
+
 .fucking-huge-text{
   font-size: 75px;
 }
@@ -27,11 +28,12 @@
   font-family: arial, sans-serif;
 }
 .night-program{
-  background-color: #395584;
+  //background-color: #395584;
+  background-color: #0e369a;
   color: white;
 }
 .day-program{
-  background-color: #FF0000;
+  background-color: #ff8a00;
 }
 .align-center{
   text-align: center;
