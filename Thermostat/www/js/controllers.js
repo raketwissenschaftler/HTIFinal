@@ -1,4 +1,4 @@
-angular.module('starter.controllers', [])
+angular.module('starter.controllers', ['ionic-timepicker'])
 
   .controller('DashCtrl', function($scope, $http, $ionicModal, rootUrl) {
     function generateLabels () {
@@ -144,7 +144,7 @@ angular.module('starter.controllers', [])
   .controller('ProgramCtrl', function($scope, $http, rootUrl) {
     $scope.weekDays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
   })
-  .controller('ProgramDetailCtrl', function ($scope, $http, $stateParams, rootUrl) {
+  .controller('ProgramDetailCtrl', function ($scope, $http, $stateParams, ionicTimePicker, rootUrl) {
     $scope.weekDay = $stateParams.weekDay;
 
     $scope.editSwitch = function (index) {
@@ -152,7 +152,19 @@ angular.module('starter.controllers', [])
     };
 
     $scope.addSwitch = function () {
+      var startTimePicker = {
+        callback: function (val) {      //Mandatory
+          if (typeof (val) === 'undefined') {
+            console.log('Time not selected');
+          } else {
+            var selectedTime = new Date(val * 1000);
+            console.log('Selected epoch is : ', val, 'and the time is ', selectedTime.getUTCHours(), 'H :', selectedTime.getUTCMinutes(), 'M');
+          }
+        },
+        setLabel: 'Set start time'    //Optional
+      };
 
+      ionicTimePicker.openTimePicker(startTimePicker);
     };
 
     $http.get(rootUrl).then(function (response) {
@@ -171,4 +183,14 @@ angular.module('starter.controllers', [])
       }
       console.log($scope.nightSwitches);
     });
+  })
+  .config(function (ionicTimePickerProvider) {
+    var timePickerObj = {
+      inputTime: (((new Date()).getHours() * 60 * 60) + ((new Date()).getMinutes() * 60)),
+      format: 24,
+      step: 1,
+      setLabel: 'Set',
+      closeLabel: 'Close'
+    };
+    ionicTimePickerProvider.configTimePicker(timePickerObj);
   });
