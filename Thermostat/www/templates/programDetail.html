@@ -2,15 +2,15 @@
   <ion-content class="padding">
     <ul class="list">
       <li class="item" ng-repeat="switch in nightSwitches"
-          ng-class="{'night-program': switch.state == 'off', 'day-program': switch.state == 'on'}"
-          ng-click="editSwitch($index)"
-      >
-        <span ng-if="switch.state =='off'">&#x1f319; </span>
-        <span ng-if="switch.state == 'on'">&#x1f31e; </span>
-        {{ switch.start }} - {{ switch.end }}
+          ng-class="{'night-program': switch.type == 'day', 'day-program': switch.type == 'night'}"
+          ng-click="editSwitch($index)">
+
+        <span ng-if="switch.type =='night'">&#x1f319; </span>
+        <span ng-if="switch.type == 'day'">&#x1f31e; </span>
+          {{ switch.start }} - {{ switch.end }}
       </li>
     </ul>
-    <button class="button button-block button-positive">
+    <button class="button button-block button-positive" ng-click="addSwitch()">
       Add item
     </button>
   </ion-content>

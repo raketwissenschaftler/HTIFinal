@@ -3,7 +3,7 @@ angular.module('starter.controllers', [])
   .controller('DashCtrl', function($scope, $http, $ionicModal, rootUrl) {
     function generateLabels () {
       var labels = [];
-      var start = moment().hour(0).minute(0).second(0);
+      var start = moment().hours(0).minutes(0).seconds(0);
 
       labels.push(start.format("HH:mm"));
       for(var i = 0; i < 22; i++){
@@ -16,45 +16,36 @@ angular.module('starter.controllers', [])
     function generateData(program, labels, dayTemperature, nightTemperature) {
       var data = [];
       var switchCounter = 0;
-      var nightSwitches = [];
+      var onSwitches = [];
       for(var i = 0; i < program.length; i++){
-        if(program[i].type == "night"){
-          nightSwitches.push(program[i]);
+        if(program[i].state == "on"){
+          onSwitches.push(program[i]);
         }
       }
-      var currentSwitch = nightSwitches[switchCounter];
+      var currentSwitch = onSwitches[switchCounter];
       for(var i = 0; i < labels.length; i++){
         var labelTime = moment(labels[i], "HH:mm");
-        if(moment(currentSwitch.time, "HH:mm") >= labelTime){
-          if(currentSwitch.state == "on"){
-            data.push(dayTemperature);
-          }else {
-            data.push(nightTemperature);
-          }
-        }else{
-          while(!(moment(currentSwitch.time, "HH:mm") >= labelTime)){
-            switchCounter++;
-            currentSwitch = nightSwitches[switchCounter];
-          }
-          if(currentSwitch.state == "on"){
-            data.push(dayTemperature);
-          }else {
-            data.push(nightTemperature);
-          }
+        while (switchCounter < onSwitches.length - 1 && labelTime >= moment(currentSwitch.time, "HH:mm")) {
+          switchCounter++;
+          currentSwitch = onSwitches[switchCounter];
+        }
+        if (currentSwitch.type == "night") {
+          data.push(nightTemperature);
+        } else {
+          data.push(dayTemperature);
         }
       }
-
       return data;
     }
     $scope.choice = 1;
     $scope.graphOptions = {
-        elements: {
-          point: {
-            radius: 0,
-            hitRadius: 0,
-            hoverRadius: 0
-          }
+      elements: {
+        point: {
+          radius: 0,
+          hitRadius: 0,
+          hoverRadius: 0
         }
+      }
     };
     $http.get(rootUrl).then(function (response) {
       $scope.currentTemp = response.data.thermostat.current_temperature;
@@ -74,6 +65,21 @@ angular.module('starter.controllers', [])
           $scope.labels.push("");
         }
       }
+
+      $("#slider").roundSlider({
+        radius: 100,
+        width: 10,
+        handleSize: "+10",
+        sliderType: "range",
+        value: response.data.thermostat.night_temperature + "," + response.data.thermostat.day_temperature,
+        min: 5,
+        max: 30,
+        startAngle: 285,
+        endAngle: 255,
+        editableTooltip: false,
+        step: 0.1,
+        tooltipFormat: renderToolTip
+      });
     });
 
     function renderToolTip(args) {
@@ -107,22 +113,6 @@ angular.module('starter.controllers', [])
       }
       return barWidthPercentages;
     }
-
-    $("#slider").roundSlider({
-      radius: 100,
-      width: 10,
-      handleSize: "+10",
-      sliderType: "range",
-      value: "15.0,21.0",
-      min: 5,
-      max: 30,
-      startAngle: 285,
-      endAngle: 255,
-      editableTooltip: false,
-      step: 0.1,
-      tooltipFormat: renderToolTip
-    });
-
 
     $scope.overrideTemp = function () {
       $scope.modal.show();
@@ -161,11 +151,15 @@ angular.module('starter.controllers', [])
 
     };
 
+    $scope.addSwitch = function () {
+
+    };
+
     $http.get(rootUrl).then(function (response) {
       $scope.nightSwitches = [];
       var program = response.data.thermostat.week_program.days[$scope.weekDay];
       for(var i = 0; i < program.switches.length; i++){
-        if(program.switches[i].type == "night"){
+        if(program.switches[i].state == "on"){
           program.switches[i].end = program.switches[i].time;
           if(i == 0){
             program.switches[i].start = "00:00";
@@ -175,5 +169,6 @@ angular.module('starter.controllers', [])
           $scope.nightSwitches.push(program.switches[i]);
         }
       }
+      console.log($scope.nightSwitches);
     });
   });
