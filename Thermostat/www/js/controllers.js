@@ -159,7 +159,7 @@ angular.module('starter.controllers', [])
       $scope.nightSwitches = [];
       var program = response.data.thermostat.week_program.days[$scope.weekDay];
       for(var i = 0; i < program.switches.length; i++){
-        if(program.switches[i].state == "on"){
+        if(program.switches[i].state == "on" && program.switches[i].time != "00:00"){
           program.switches[i].end = program.switches[i].time;
           if(i == 0){
             program.switches[i].start = "00:00";
