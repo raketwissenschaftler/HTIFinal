@@ -1,7 +1,7 @@
 <ion-view title="{{ weekDay}}">
   <ion-content class="padding">
     <ul class="list">
-      <li class="item" ng-repeat="switch in nightSwitches"
+      <li class="item" ng-repeat="switch in onSwitches"
           ng-class="{'night-program': switch.type == 'day', 'day-program': switch.type == 'night'}"
           ng-click="editSwitch($index)">
 

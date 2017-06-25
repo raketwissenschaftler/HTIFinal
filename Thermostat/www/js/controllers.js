@@ -93,14 +93,14 @@ angular.module('starter.controllers', ['ionic-timepicker'])
     function getBarWidthPrecentages(program) {
       var barWidthPercentages = [];
       var switchTimes = [];
-      var nightSwitches = [];
+      var onSwitches = [];
       for(var i = 0; i < program.switches.length; i++){
         if(program.switches[i].type == "night"){
-          nightSwitches.push(program.switches[i]);
+          onSwitches.push(program.switches[i]);
         }
       }
-      for(var i = 0; i < nightSwitches.length; i++){
-        switchTimes.push(parseInt(nightSwitches[i].time.split(":").join("")));
+      for(var i = 0; i < onSwitches.length; i++){
+        switchTimes.push(parseInt(onSwitches[i].time.split(":").join("")));
       }
 
       for(var i = 0; i < switchTimes.length; i++){
@@ -109,7 +109,7 @@ angular.module('starter.controllers', ['ionic-timepicker'])
         }else {
           percentage = Math.floor(((switchTimes[i] - switchTimes[i - 1]) / 2400)*100) + "%";
         }
-        barWidthPercentages.push({width: percentage, state: nightSwitches[i].state});
+        barWidthPercentages.push({width: percentage, state: onSwitches[i].state});
       }
       return barWidthPercentages;
     }
@@ -144,44 +144,99 @@ angular.module('starter.controllers', ['ionic-timepicker'])
   .controller('ProgramCtrl', function($scope, $http, rootUrl) {
     $scope.weekDays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
   })
-  .controller('ProgramDetailCtrl', function ($scope, $http, $stateParams, ionicTimePicker, rootUrl) {
+  .controller('ProgramDetailCtrl', function ($scope, $http, $stateParams, $ionicModal, ionicTimePicker, rootUrl) {
     $scope.weekDay = $stateParams.weekDay;
-
-    $scope.editSwitch = function (index) {
-
+    $scope.switchType = "day";
+    var endTimePicker = {
+      callback: function (val) {
+        if(typeof (val) === 'undefined'){
+          console.log("Time not selected")
+        }else{
+          $scope.endTime = moment(val * 1000);
+          console.log($scope.endTime);
+        }
+      },
+      setLabel: 'Set end time'
     };
 
-    $scope.addSwitch = function () {
+    function inverseSwitch(switchType) {
+      if(switchType === "day"){
+        return "night";
+      }else{
+        return "day";
+      }
+    }
+
+    function generateOnSwitches() {
+      $scope.program.switches.sort(function (a, b) {
+        return moment(b.time, "HH:mm") - moment(a.time, "HH:mm");
+      });
+      for(var i = 0; i < $scope.program.switches.length; i++){
+        if($scope.program.switches[i].state == "on" && $scope.program.switches[i].time != "00:00"){
+          $scope.program.switches[i].end = $scope.program.switches[i].time;
+          if(i == 0){
+            $scope.program.switches[i].start = "00:00";
+          }else{
+            $scope.program.switches[i].start = $scope.program.switches[i - 1].time;
+          }
+
+          $scope.onSwitches.push($scope.program.switches[i]);
+        }
+      }
+      $scope.onSwitches.sort(function (a, b) {
+        return moment(b.start, "HH:mm") - moment(a.start, "HH:mm");
+      });
+    }
+
+    $scope.setStartTime = function () {
       var startTimePicker = {
-        callback: function (val) {      //Mandatory
+        callback: function (val) {
           if (typeof (val) === 'undefined') {
             console.log('Time not selected');
           } else {
-            var selectedTime = new Date(val * 1000);
-            console.log('Selected epoch is : ', val, 'and the time is ', selectedTime.getUTCHours(), 'H :', selectedTime.getUTCMinutes(), 'M');
+            $scope.startTime = moment(val * 1000);
+            ionicTimePicker.openTimePicker(endTimePicker);
           }
         },
-        setLabel: 'Set start time'    //Optional
+        setLabel: 'Set start time'
       };
-
       ionicTimePicker.openTimePicker(startTimePicker);
     };
 
+    $scope.setEndTime = function () {
+      ionicTimePicker.openTimePicker(endTimePicker);
+    };
+    $scope.addSwitch = function () {
+      $scope.modal.show();
+    };
+
+    $scope.submitChanges = function () {
+      var startSwitch = {
+        type: $scope.switchType,
+        time: $scope.startTime.format("HH:mm")
+      };
+
+      var endSwitch = {
+        type: inverseSwitch($scope.switchType),
+        time: $scope.endTime.format("HH:mm")
+      };
+      $scope.program.switches.push(startSwitch);
+      $scope.program.switches.push(endSwitch);
+      generateOnSwitches();
+      console.log("Changes submitted");
+      $scope.modal.hide();
+    };
+    $ionicModal.fromTemplateUrl("templates/addSwitchModal.html", {
+      scope: $scope,
+      animation: 'slide-in-up'
+    }).then(function (modal) {
+      $scope.modal = modal;
+    });
+
     $http.get(rootUrl).then(function (response) {
-      $scope.nightSwitches = [];
-      var program = response.data.thermostat.week_program.days[$scope.weekDay];
-      for(var i = 0; i < program.switches.length; i++){
-        if(program.switches[i].state == "on" && program.switches[i].time != "00:00"){
-          program.switches[i].end = program.switches[i].time;
-          if(i == 0){
-            program.switches[i].start = "00:00";
-          }else{
-            program.switches[i].start = program.switches[i - 1].time;
-          }
-          $scope.nightSwitches.push(program.switches[i]);
-        }
-      }
-      console.log($scope.nightSwitches);
+      $scope.onSwitches = [];
+      $scope.program = response.data.thermostat.week_program.days[$scope.weekDay];
+      generateOnSwitches();
     });
   })
   .config(function (ionicTimePickerProvider) {

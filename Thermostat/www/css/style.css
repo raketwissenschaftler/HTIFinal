@@ -50,3 +50,6 @@
 .buttons-div{
   margin-top: 5%;
 }
+.button_close{
+  display: none !important;
+}
