@@ -1,9 +1,9 @@
 <ion-view title="{{ weekDay}}">
   <ion-content class="padding">
     <ul class="list">
-      <li class="item" ng-repeat="switch in onSwitches"
-          ng-class="{'night-program': switch.type == 'day', 'day-program': switch.type == 'night'}"
-          ng-click="editSwitch($index)">
+      <li class="item" ng-repeat="switch in switches"
+          on-long-press="deleteItem(switch, $index)"
+          ng-class="{'night-program': switch.type == 'night', 'day-program': switch.type == 'day'}">
 
         <span ng-if="switch.type =='night'">&#x1f319; </span>
         <span ng-if="switch.type == 'day'">&#x1f31e; </span>

@@ -1,6 +1,6 @@
 angular.module('starter.controllers', ['ionic-timepicker'])
 
-  .controller('DashCtrl', function($scope, $http, $ionicModal, rootUrl) {
+  .controller('DashCtrl', function($scope, $http, $ionicModal, $interval, rootUrl) {
     function generateLabels () {
       var labels = [];
       var start = moment().hours(0).minutes(0).seconds(0);
@@ -13,31 +13,57 @@ angular.module('starter.controllers', ['ionic-timepicker'])
       return labels;
     }
 
-    function generateData(program, labels, dayTemperature, nightTemperature) {
+    function generateData(weekDay, labels, dayTemperature, nightTemperature) {
+      var programData = {};
       var data = [];
-      var switchCounter = 0;
-      var onSwitches = [];
-      for(var i = 0; i < program.length; i++){
-        if(program[i].state == "on"){
-          onSwitches.push(program[i]);
+      var days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+      var weekProgram = getWeekProgram();
+      for(var i = 0; i < days.length; i++){
+        var day = weekProgram[days[i]];
+        var dayOutput = [];
+        for(var j = 0; j < day.length; j++){
+          var switches = day[j];
+          var switchesOutput = [];
+          for(var k = 0; k < switches.length; k++){
+            var _switch = switches[k];
+            var switchSplit = _switch.split(":");
+            if(parseInt(switchSplit[1]) > 30){
+              _switch = (parseInt(switchSplit[0]) + 1) + ":00";
+            }else{
+              _switch = switchSplit[0] + ":00";
+            }
+            switchesOutput.push(_switch);
+          }
+          dayOutput.push(switchesOutput);
         }
+        programData[days[i]] = dayOutput;
       }
-      var currentSwitch = onSwitches[switchCounter];
+      console.log(programData);
+      var switchIndex = 0;
+      var day = programData[weekDay];
       for(var i = 0; i < labels.length; i++){
         var labelTime = moment(labels[i], "HH:mm");
-        while (switchCounter < onSwitches.length - 1 && labelTime >= moment(currentSwitch.time, "HH:mm")) {
-          switchCounter++;
-          currentSwitch = onSwitches[switchCounter];
+        if(labelTime >= day[switchIndex][1] && switchIndex < day.length - 1){
+          switchIndex++;
         }
-        if (currentSwitch.type == "night") {
-          data.push(nightTemperature);
-        } else {
+        if (labelTime >= moment(day[switchIndex][0], "HH:mm") && labelTime <= moment(day[switchIndex][1], "HH:mm")){
           data.push(dayTemperature);
+        }else{
+          data.push(nightTemperature);
         }
       }
       return data;
     }
+    function setNewTemperatures (event) {
+      if(event.handle.index == 1){
+        put("nightTemperature", "night_temperature", event.value.split(",")[0]);
+      }else{
+        console.log(event.value.split(",")[1]);
+        put("dayTemperature", "day_temperature", event.value.split(",")[1]);
+      }
+    }
     $scope.choice = 1;
+    $scope.overrideTemperature = 20.0;
     $scope.graphOptions = {
       elements: {
         point: {
@@ -47,13 +73,22 @@ angular.module('starter.controllers', ['ionic-timepicker'])
         }
       }
     };
+
+    $scope.overrideTemps = function () {
+      put("targetTemperature", "target_temperature", $scope.overrideTemperature);
+
+      if ($scope.choice == 2){
+        put("weekProgramState", "week_program_state", "off");
+      }
+      $scope.modal.hide();
+    };
+
     $http.get(rootUrl).then(function (response) {
       $scope.currentTemp = response.data.thermostat.current_temperature;
       $scope.currentProgram = response.data.thermostat.week_program.days[response.data.thermostat.current_day];
-      $scope.programBars = getBarWidthPrecentages($scope.currentProgram);
       var labels = generateLabels();
       $scope.data = generateData(
-        $scope.currentProgram.switches, labels,
+        response.data.thermostat.current_day, labels,
         response.data.thermostat.day_temperature,
         response.data.thermostat.night_temperature
       );
@@ -78,7 +113,8 @@ angular.module('starter.controllers', ['ionic-timepicker'])
         endAngle: 255,
         editableTooltip: false,
         step: 0.1,
-        tooltipFormat: renderToolTip
+        tooltipFormat: renderToolTip,
+        stop: setNewTemperatures
       });
     });
 
@@ -90,32 +126,11 @@ angular.module('starter.controllers', ['ionic-timepicker'])
       }
     }
 
-    function getBarWidthPrecentages(program) {
-      var barWidthPercentages = [];
-      var switchTimes = [];
-      var onSwitches = [];
-      for(var i = 0; i < program.switches.length; i++){
-        if(program.switches[i].type == "night"){
-          onSwitches.push(program.switches[i]);
-        }
-      }
-      for(var i = 0; i < onSwitches.length; i++){
-        switchTimes.push(parseInt(onSwitches[i].time.split(":").join("")));
-      }
-
-      for(var i = 0; i < switchTimes.length; i++){
-        if(i==0){
-          var percentage = Math.floor((switchTimes[i]/2400)*100) + "%";
-        }else {
-          percentage = Math.floor(((switchTimes[i] - switchTimes[i - 1]) / 2400)*100) + "%";
-        }
-        barWidthPercentages.push({width: percentage, state: onSwitches[i].state});
-      }
-      return barWidthPercentages;
-    }
-
     $scope.overrideTemp = function () {
       $scope.modal.show();
+      function setNewTemp(event) {
+        $scope.overrideTemperature = event.value;
+      }
       $("#override-slider").roundSlider({
         radius: 100,
         width: 10,
@@ -127,7 +142,8 @@ angular.module('starter.controllers', ['ionic-timepicker'])
         startAngle: 285,
         endAngle: 255,
         editableTooltip: false,
-        step: 0.1
+        step: 0.1,
+        stop: setNewTemp
       });
     };
 
@@ -138,23 +154,41 @@ angular.module('starter.controllers', ['ionic-timepicker'])
       $scope.modal = modal;
     });
 
-
+    $interval(function () {
+      $scope.currentTemp = get("currentTemperature", "current_temperature");
+      console.log($scope.currentTemp);
+    }, 1000);
   })
 
   .controller('ProgramCtrl', function($scope, $http, rootUrl) {
     $scope.weekDays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+    var weekProgramState = get("weekProgramState", "week_program_state");
+    console.log(weekProgramState);
+    if(weekProgramState == "on"){
+      $scope.weekProgramDisabled = true;
+    }else{
+      $scope.weekProgramDisabled = false;
+    }
+
+    $scope.enableWeekProgram = function () {
+      put("weekProgramState", "week_program_state", "on");
+      $scope.weekProgramDisabled = true;
+    }
+
   })
-  .controller('ProgramDetailCtrl', function ($scope, $http, $stateParams, $ionicModal, ionicTimePicker, rootUrl) {
+  .controller('ProgramDetailCtrl', function ($scope, $http, $stateParams, $ionicModal, $ionicPopup, ionicTimePicker, rootUrl) {
     $scope.weekDay = $stateParams.weekDay;
     $scope.switchType = "day";
+
+    $scope.switches = generateOnSwitches();
     var endTimePicker = {
       callback: function (val) {
+        console.log(val);
         if(typeof (val) === 'undefined'){
           console.log("Time not selected")
         }else{
           //add -1 is needed to fix that the starttime will be upped with 1 on what the timepicker shows
           $scope.endTime = moment(val * 1000).add(-1, "hour");
-          console.log($scope.endTime);
         }
       },
       setLabel: 'Set end time'
@@ -169,34 +203,44 @@ angular.module('starter.controllers', ['ionic-timepicker'])
     }
 
     function generateOnSwitches() {
-      $scope.program.switches.sort(function (a, b) {
-        return moment(b.time, "HH:mm") - moment(a.time, "HH:mm");
-      });
-      for(var i = 0; i < $scope.program.switches.length; i++){
-        if($scope.program.switches[i].state == "on" && $scope.program.switches[i].time != "00:00"){
-          $scope.program.switches[i].end = $scope.program.switches[i].time;
-          if(i == 0){
-            $scope.program.switches[i].start = "00:00";
-          }else{
-            $scope.program.switches[i].start = $scope.program.switches[i - 1].time;
-          }
+      var program = getWeekProgram();
+      var dayProgram = program[$scope.weekDay];
+      var switches = [];
+      switches.push({type: "night", start: "00:00", end: dayProgram[0][0]})
+      for(var i = 0; i < dayProgram.length; i++){
+        var daySwitch = {
+          start: dayProgram[i][0],
+          end: dayProgram[i][1],
+          type: "day"
+        };
 
-          $scope.onSwitches.push($scope.program.switches[i]);
+        switches.push(daySwitch);
+        if(i < dayProgram.length - 1){
+          var endTime = dayProgram[i + 1][0];
+        }else{
+          endTime = "00:00";
         }
+
+        var nightSwitch = {
+          start: dayProgram[i][1],
+          end: endTime,
+          type: "night"
+        };
+
+        switches.push(nightSwitch)
       }
-      $scope.onSwitches.sort(function (a, b) {
-        return moment(b.start, "HH:mm") - moment(a.start, "HH:mm");
-      });
+      return switches;
     }
 
     $scope.setStartTime = function () {
       var startTimePicker = {
         callback: function (val) {
+          console.log(val);
           if (typeof (val) === 'undefined') {
-            console.log('Time not selected');
           } else {
             //add -1 is needed to fix that the starttime will be upped with 1 on what the timepicker shows
             $scope.startTime = moment(val * 1000).add(-1, "hour");
+            console.log($scope.startTime.format("HH:mm"));
             ionicTimePicker.openTimePicker(endTimePicker);
           }
         },
@@ -224,10 +268,32 @@ angular.module('starter.controllers', ['ionic-timepicker'])
       };
       $scope.program.switches.push(startSwitch);
       $scope.program.switches.push(endSwitch);
-      generateOnSwitches();
-      console.log("Changes submitted");
+
+      addPeriod($scope.weekDay, $scope.startTime.format("HH:mm"), $scope.startTime.format("HH:mm"));
       $scope.modal.hide();
     };
+
+    $scope.deleteItem = function (item, index) {
+      var confirmPopup = $ionicPopup.confirm({
+        title: "Remove switch",
+        template: "Are you sure you want to remove this switch?"
+      });
+      confirmPopup.then(function (res) {
+        if(res){
+          if(item.type == "day"){
+            index = (index - 1)/2;
+            removePeriod($scope.weekDay, index);
+            $scope.switches.splice(index);
+          }
+        }
+      });
+
+    };
+    $http.get(rootUrl).then(function (response) {
+      $scope.program = response.data.thermostat.week_program.days[$scope.weekDay];
+      generateOnSwitches();
+    });
+
     $ionicModal.fromTemplateUrl("templates/addSwitchModal.html", {
       scope: $scope,
       animation: 'slide-in-up'
@@ -235,11 +301,6 @@ angular.module('starter.controllers', ['ionic-timepicker'])
       $scope.modal = modal;
     });
 
-    $http.get(rootUrl).then(function (response) {
-      $scope.onSwitches = [];
-      $scope.program = response.data.thermostat.week_program.days[$scope.weekDay];
-      generateOnSwitches();
-    });
   })
   .config(function (ionicTimePickerProvider) {
     var timePickerObj = {

@@ -14,7 +14,7 @@
         <ion-radio ng-model="choice" ng-value="1">Override until next switch</ion-radio>
         <ion-radio ng-model="choice" ng-value="2">Override permanently</ion-radio>
       </ion-list>
-      <button class="button button-block button-positive large-button">
+      <button class="button button-block button-positive large-button" ng-click="overrideTemps()">
         Override
       </button>
       <button class="button button-block button-assertive" ng-click="modal.hide()" style="margin-top: 5%">
