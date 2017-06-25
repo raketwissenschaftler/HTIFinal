@@ -6,7 +6,7 @@ angular.module('starter.controllers', ['ionic-timepicker'])
       var start = moment().hours(0).minutes(0).seconds(0);
 
       labels.push(start.format("HH:mm"));
-      for(var i = 0; i < 22; i++){
+      for(var i = 0; i < 23; i++){
         start.add(1, "hour");
         labels.push(start.format("HH:mm"));
       }
@@ -152,7 +152,8 @@ angular.module('starter.controllers', ['ionic-timepicker'])
         if(typeof (val) === 'undefined'){
           console.log("Time not selected")
         }else{
-          $scope.endTime = moment(val * 1000);
+          //add -1 is needed to fix that the starttime will be upped with 1 on what the timepicker shows
+          $scope.endTime = moment(val * 1000).add(-1, "hour");
           console.log($scope.endTime);
         }
       },
@@ -194,7 +195,8 @@ angular.module('starter.controllers', ['ionic-timepicker'])
           if (typeof (val) === 'undefined') {
             console.log('Time not selected');
           } else {
-            $scope.startTime = moment(val * 1000);
+            //add -1 is needed to fix that the starttime will be upped with 1 on what the timepicker shows
+            $scope.startTime = moment(val * 1000).add(-1, "hour");
             ionicTimePicker.openTimePicker(endTimePicker);
           }
         },
