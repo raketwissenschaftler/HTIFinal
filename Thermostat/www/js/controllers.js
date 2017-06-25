@@ -269,7 +269,7 @@ angular.module('starter.controllers', ['ionic-timepicker'])
       $scope.program.switches.push(startSwitch);
       $scope.program.switches.push(endSwitch);
 
-      addPeriod($scope.weekDay, $scope.startTime.format("HH:mm"), $scope.startTime.format("HH:mm"));
+      addPeriod($scope.weekDay, $scope.startTime.format("HH:mm"), $scope.endTime.format("HH:mm"));
       $scope.modal.hide();
     };
 
